@@ -1,0 +1,2 @@
+# DiscordJS-EasyColors
+DiscordのANSIシンタックスハイライトをより使いやすくします
