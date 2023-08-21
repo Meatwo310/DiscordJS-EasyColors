@@ -1,0 +1,27 @@
+{
+  "name": "discordjs-easycolors",
+  "version": "1.0.0",
+  "description": "DiscordのANSIシンタックスハイライトをより使いやすくします",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Meatwo310/DiscordJS-EasyColors.git"
+  },
+  "author": "Meatwo310",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Meatwo310/DiscordJS-EasyColors/issues"
+  },
+  "homepage": "https://github.com/Meatwo310/DiscordJS-EasyColors#readme",
+  "dependencies": {
+    "discord.js": "^14.13.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.47.0",
+    "eslint-config-google": "^0.14.0"
+  }
+}

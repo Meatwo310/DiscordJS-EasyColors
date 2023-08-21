@@ -1,0 +1,23 @@
+{
+  "env": {
+    "commonjs": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": "google",
+  "overrides": [],
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "rules": {
+    "max-len": [
+      "warn",
+      120
+    ],
+    "indent": [
+      "warn",
+      2
+    ],
+    "valid-jsdoc": "off"
+  }
+}
