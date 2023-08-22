@@ -1,9 +1,10 @@
 // インポート
 const fs = require('fs');
 const path = require('path');
-const {Client, Collection, Events, GatewayIntentBits} = require('discord.js');
+const {Client, Collection, Events, GatewayIntentBits, DiscordAPIError} = require('discord.js');
 require('dotenv').config();
 
+const config = require('./config.json');
 
 // 環境変数からトークンを取得
 /**
@@ -15,7 +16,11 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 // BOTのセットアップ
 
 // clientインスタンスを作成
-const client = new Client({intents: [GatewayIntentBits.Guilds]});
+const client = new Client({intents: [
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMessages,
+  // GatewayIntentBits.GuildMembers,
+]});
 
 // コマンドを格納するCollectionを作成
 client.commands = new Collection();
@@ -74,6 +79,106 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
+
+
+/**
+ * config.jsonのansiコンフィグからヘルプメッセージを生成して返す
+ * @param {Object} ansiConfig
+ * @returns {String}
+ */
+const getHelpMessage = (ansiConfig) => `\
+${ansiConfig.escape}[1m${ansiConfig.escape}[4m${ansiConfig.escape}[0;42m使い方${ansiConfig.escape}[0m
+※メンションされたメッセージのみ置き換えを実行します
+
+` +
+Object.entries(ansiConfig.colors).map(([prefix, v]) =>
+  Object.entries(v).map(([key, value]) =>
+    `${ansiConfig.escape}${value}${prefix}${key}: ${
+      ansiConfig.helpMessages[value] || 'Unknown'
+    }${ansiConfig.escape}[0m`,
+  ).join('\n'),
+).join('');
+
+client.on(Events.MessageCreate, async (message) => {
+  try {
+    const author = message.author;
+    const mentions = message.mentions;
+    const content = message.content;
+
+    // BOTのメッセージは無視
+    if (author.bot) return;
+    // メンションされていない場合は無視
+    if (!mentions.has(client.user)) return;
+    // メッセージの中身が取得できない場合は無視
+    if (content === '') return;
+
+    console.log(`メッセージを受信: ${content}`);
+
+    let replacedContent = content.toString();
+    replacedContent = replacedContent.replace(
+      new RegExp(` ?<@!?${client.user.id}> ?`),
+      // `@${client.user.displayName}#${client.user.discriminator}`,
+      '',
+    );
+
+    /*
+    // メンションをユーザー名に置換
+    replacedContent.replace(/ ?<@!?(\d+)> ?/g, (async (match, p1) => {
+      try {
+        console.log(`ユーザーID: ${p1}`);
+        const user = await client.users.fetch(p1);
+        return `@${user.displayName}`;
+      } catch (error) {
+        // ユーザーが見つからない場合は無視
+        if (error instanceof DiscordAPIError && error.code === 10013) {
+          return match;
+        }
+      } finally {
+        return match;
+      }
+    }));
+    */
+
+    // ANSIエスケープシーケンスに置換
+    replacedContent = replacedContent.replace(/\\&/g, '\\＆');
+    Object.entries(config.ansi.colors).forEach(([prefix, v]) => {
+      Object.entries(v).forEach(([key, value]) => {
+        // console.log(`prefix: ${prefix}, key: ${key}, value: ${value}`);
+        replacedContent = replacedContent.replace(
+          new RegExp(`${prefix}${key}`, 'g'),
+          `${config.ansi.escape}${value}`,
+        );
+      });
+    });
+    replacedContent = replacedContent.replace(/\\＆/g, '&');
+
+    // ```は間に空白文字を入れることでコードブロックから外れることを回避
+    replacedContent.replace(/```/g, '​`​`​`​');
+
+    if (replacedContent === '') {
+      replacedContent = getHelpMessage(config.ansi);
+    }
+
+    replacedContent = `\`\`\`ansi\n${replacedContent}\n\`\`\``;
+
+    // メッセージを送信
+    await message.reply({content: replacedContent, allowedMentions: {repliedUser: false, roles: [], users: []}});
+  } catch (error) {
+    // "Cannot send an empty message"エラーのときは無視
+    if (error instanceof DiscordAPIError && error.code === 50006) {
+      return;
+    }
+
+    console.error(error);
+
+    try {
+      await message.reply({content: 'エラーが発生しました', allowedMentions: {repliedUser: false, roles: [], users: []}});
+    } catch (error) {
+      console.error('エラーを返信できませんでした: ', error);
+    }
+  }
+});
+
 
 // トークンを使用してログイン!
 client.login(BOT_TOKEN);
