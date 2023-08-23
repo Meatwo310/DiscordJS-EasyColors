@@ -112,7 +112,7 @@ client.on(Events.MessageCreate, async (message) => {
     // メッセージの中身が取得できない場合は無視
     if (content === '') return;
 
-    console.log(`メッセージを受信: ${content}`);
+    // console.log(`メッセージを受信: ${content}`);
 
     let replacedContent = content.toString();
     replacedContent = replacedContent.replace(
